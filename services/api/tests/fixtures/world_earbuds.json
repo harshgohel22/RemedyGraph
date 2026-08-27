@@ -1,0 +1,67 @@
+{
+  "merchant_id": "mch_aurum",
+  "merchant_name": "Aurum Audio",
+  "replace": true,
+  "customers": [
+    {
+      "customer_id": "cus_asha",
+      "display_name": "Asha"
+    }
+  ],
+  "orders": [
+    {
+      "order_id": "ord_1001",
+      "customer_id": "cus_asha",
+      "created_at": "2026-07-01T10:00:00+05:30",
+      "lines": [
+        {
+          "order_line_id": "ol_earbuds",
+          "product_id": "wireless_earbuds",
+          "product_name": "Wireless Earbuds",
+          "quantity": 1,
+          "unit_price_minor": 499900,
+          "units": [
+            {
+              "unit_id": "unit_right",
+              "parent_unit_id": null
+            },
+            {
+              "unit_id": "unit_left",
+              "parent_unit_id": null
+            },
+            {
+              "unit_id": "unit_right_r2",
+              "parent_unit_id": "unit_right"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "support_messages": [
+    {
+      "support_message_id": "msg_wa_001",
+      "customer_id": "cus_asha",
+      "channel": "WHATSAPP",
+      "body": "The right earbud has stopped working. Please send a replacement.",
+      "occurred_at": "2026-08-10T11:15:00+05:30",
+      "order_reference": "ord_1001",
+      "external_message_id": "wa_1001"
+    }
+  ],
+  "historical_remedies": [
+    {
+      "remedy_request_id": "rrq_repl_001",
+      "support_message_id": "msg_wa_001",
+      "customer_id": "cus_asha",
+      "remedy_type": "REPLACEMENT",
+      "amount_minor": 499900,
+      "entitlement_consumption_minor": 499900,
+      "merchant_cost_minor": 220000,
+      "currency": "INR",
+      "idempotency_key": "remedy_rrq_repl_001_v1",
+      "status": "SETTLED",
+      "item_unit_id": "unit_right"
+    }
+  ]
+}
