@@ -1,12 +1,9 @@
 from datetime import datetime
-from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, PlainValidator, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.enums import Channel, Currency, RemedyStatus, RemedyType
-from app.domain.money import parse_minor_units
-
-MinorUnits = Annotated[int, PlainValidator(parse_minor_units)]
+from app.domain.money import MinorUnits
 
 
 class SupportMessageIn(BaseModel):

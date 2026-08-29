@@ -9,7 +9,7 @@ from app.domain.enums import (
     RemedyType,
 )
 from app.domain.ids import new_id
-from app.domain.money import parse_minor_units
+from app.domain.money import MinorUnits, parse_minor_units
 
 __all__ = [
     "Channel",
@@ -21,5 +21,6 @@ __all__ = [
     "RemedyStatus",
     "RemedyType",
     "new_id",
+    "MinorUnits",
     "parse_minor_units",
 ]

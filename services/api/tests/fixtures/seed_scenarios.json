@@ -1,0 +1,256 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "seed_new_incident_allow",
+      "family": "new_incident",
+      "incident_id": "inc_new_001",
+      "relation": "NEW_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    },
+    {
+      "scenario_id": "seed_same_incident_partial_remainder_allow",
+      "family": "partial_compensation",
+      "incident_id": "inc_partial_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 200000,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 299900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 299900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 299900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 299900
+      }
+    },
+    {
+      "scenario_id": "seed_same_incident_exceeds_prevent",
+      "family": "entitlement_exhausted",
+      "incident_id": "inc_exh_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 499900,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 499900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "seed_two_partial_exceeds_prevent",
+      "family": "partial_compensation",
+      "incident_id": "inc_two_partial_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 300000,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 300000,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 300000,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 199900,
+        "remaining_after_minor": 199900,
+        "avoidable_overcompensation_minor": 100100,
+        "max_safe_amount_minor": 199900
+      }
+    },
+    {
+      "scenario_id": "seed_replacement_then_refund_prevent",
+      "family": "replacement_then_refund",
+      "incident_id": "inc_repl_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 499900,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 499900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "seed_store_credit_then_refund_prevent",
+      "family": "store_credit_then_refund",
+      "incident_id": "inc_credit_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 499900,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 499900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "seed_reserved_blocks_second",
+      "family": "concurrent_reservation",
+      "incident_id": "inc_reserve_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 499900,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 499900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "seed_failed_refund_retry_allow",
+      "family": "failed_retry",
+      "incident_id": "inc_fail_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    },
+    {
+      "scenario_id": "seed_released_reservation_allow",
+      "family": "released_reservation",
+      "incident_id": "inc_rel_001",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    },
+    {
+      "scenario_id": "seed_uncertain_review",
+      "family": "ambiguous_link",
+      "incident_id": "inc_unc_001",
+      "relation": "UNCERTAIN",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 499900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    },
+    {
+      "scenario_id": "seed_partial_overlap_review",
+      "family": "multi_incident_claim",
+      "incident_id": "inc_overlap_001",
+      "relation": "PARTIALLY_OVERLAPPING",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 499900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    },
+    {
+      "scenario_id": "seed_new_incident_overask_review",
+      "family": "new_incident_overask",
+      "incident_id": "inc_over_001",
+      "relation": "NEW_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 599900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 599900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 499900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    }
+  ]
+}

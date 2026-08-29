@@ -1,3 +1,8 @@
+from typing import Annotated
+
+from pydantic import PlainValidator
+
+
 def parse_minor_units(value: object) -> int:
     """Parse a money amount that must already be integer paise.
 
@@ -10,3 +15,6 @@ def parse_minor_units(value: object) -> int:
             raise ValueError("amounts must be >= 0")
         return value
     raise ValueError("amounts must be integer paise")
+
+
+MinorUnits = Annotated[int, PlainValidator(parse_minor_units)]
