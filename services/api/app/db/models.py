@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKeyConstraint, JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -26,6 +26,12 @@ class Merchant(Base):
         back_populates="merchant", cascade="all, delete-orphan"
     )
     audit_events: Mapped[list["AuditEvent"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
+    entitlements: Mapped[list["Entitlement"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
+    remedy_reservations: Mapped[list["RemedyReservation"]] = relationship(
         back_populates="merchant", cascade="all, delete-orphan"
     )
 
@@ -124,6 +130,55 @@ class RemedyRequest(Base):
     merchant: Mapped[Merchant] = relationship(back_populates="remedy_requests")
     support_message: Mapped[SupportMessage] = relationship(back_populates="remedy_requests")
 
+
+
+
+class Entitlement(Base):
+    """One lockable money row per incident. settled + reserved must never exceed allowed."""
+
+    __tablename__ = "entitlements"
+    __table_args__ = (
+        CheckConstraint(
+            "settled_minor + reserved_minor <= allowed_minor",
+            name="ck_entitlement_cap",
+        ),
+        CheckConstraint("settled_minor >= 0", name="ck_entitlement_settled_nonneg"),
+        CheckConstraint("reserved_minor >= 0", name="ck_entitlement_reserved_nonneg"),
+    )
+
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), primary_key=True)
+    incident_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    allowed_minor: Mapped[int] = mapped_column(Integer, nullable=False)
+    settled_minor: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    reserved_minor: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="entitlements")
+
+
+class RemedyReservation(Base):
+    __tablename__ = "remedy_reservations"
+    __table_args__ = (
+        UniqueConstraint("merchant_id", "idempotency_key", name="uq_reservations_idempotency"),
+        ForeignKeyConstraint(
+            ["merchant_id", "incident_id"],
+            ["entitlements.merchant_id", "entitlements.incident_id"],
+            ondelete="CASCADE",
+            name="fk_reservations_entitlement",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    incident_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    remedy_request_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    amount_minor: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="remedy_reservations")
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"

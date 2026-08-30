@@ -10,7 +10,7 @@ from app.core.config import settings
 
 def _sqlite_connect_args(url: str) -> dict:
     if url.startswith("sqlite"):
-        return {"check_same_thread": False}
+        return {"check_same_thread": False, "timeout": 30.0}
     return {}
 
 
