@@ -34,6 +34,15 @@ class Merchant(Base):
     remedy_reservations: Mapped[list["RemedyReservation"]] = relationship(
         back_populates="merchant", cascade="all, delete-orphan"
     )
+    razorpay_payments: Mapped[list["RazorpayPayment"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
+    razorpay_refunds: Mapped[list["RazorpayRefund"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
+    webhook_events: Mapped[list["WebhookEvent"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
 
 
 class Customer(Base):
@@ -179,6 +188,55 @@ class RemedyReservation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     merchant: Mapped[Merchant] = relationship(back_populates="remedy_reservations")
+
+
+class RazorpayPayment(Base):
+    __tablename__ = "razorpay_payments"
+    __table_args__ = (
+        UniqueConstraint("merchant_id", "razorpay_payment_id", name="uq_payments_razorpay_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    internal_order_id: Mapped[str | None] = mapped_column(ForeignKey("orders.id", ondelete="SET NULL"))
+    razorpay_payment_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    razorpay_order_id: Mapped[str | None] = mapped_column(String(64))
+    amount_minor: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="razorpay_payments")
+
+
+class RazorpayRefund(Base):
+    __tablename__ = "razorpay_refunds"
+    __table_args__ = (
+        UniqueConstraint("merchant_id", "idempotency_key", name="uq_refunds_idempotency"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    incident_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payment_id: Mapped[str] = mapped_column(ForeignKey("razorpay_payments.id", ondelete="RESTRICT"), nullable=False)
+    razorpay_refund_id: Mapped[str | None] = mapped_column(String(64))
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    amount_minor: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="razorpay_refunds")
+
+
+class WebhookEvent(Base):
+    __tablename__ = "webhook_events"
+
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    merchant_id: Mapped[str | None] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"))
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="webhook_events")
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"

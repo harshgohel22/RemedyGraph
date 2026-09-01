@@ -114,6 +114,20 @@ class IngestService:
                 )
             )
 
+        for payment in request.razorpay_payments:
+            self.session.add(
+                models.RazorpayPayment(
+                    id=new_id("pay"),
+                    merchant_id=request.merchant_id,
+                    internal_order_id=payment.internal_order_id,
+                    razorpay_payment_id=payment.razorpay_payment_id,
+                    razorpay_order_id=payment.razorpay_order_id,
+                    amount_minor=payment.amount_minor,
+                    status=payment.status,
+                )
+            )
+        self.session.flush()
+
         audit_id = new_id("aud")
         self.session.add(
             models.AuditEvent(
@@ -127,6 +141,7 @@ class IngestService:
                     "unit_count": unit_count,
                     "support_message_count": len(request.support_messages),
                     "historical_remedy_count": len(request.historical_remedies),
+                    "payment_count": len(request.razorpay_payments),
                     "replaced": replaced,
                 },
             )
@@ -140,6 +155,7 @@ class IngestService:
             unit_count=unit_count,
             support_message_count=len(request.support_messages),
             historical_remedy_count=len(request.historical_remedies),
+            payment_count=len(request.razorpay_payments),
             audit_id=audit_id,
             replaced=replaced,
         )
@@ -370,6 +386,15 @@ class IngestService:
                 )
             if remedy.item_unit_id is not None and remedy.item_unit_id not in unit_ids:
                 raise WorldValidationError(f"historical remedy references unknown unit: {remedy.item_unit_id}")
+
+        payment_ids = {p.razorpay_payment_id for p in request.razorpay_payments}
+        if len(payment_ids) != len(request.razorpay_payments):
+            raise WorldValidationError("duplicate razorpay_payment_id in world")
+        for payment in request.razorpay_payments:
+            if payment.internal_order_id is not None and payment.internal_order_id not in order_ids:
+                raise WorldValidationError(
+                    f"payment references unknown order: {payment.internal_order_id}"
+                )
 
     def _ordered_units(self, units: list[WorldItemUnitIn]) -> list[WorldItemUnitIn]:
         remaining = list(units)

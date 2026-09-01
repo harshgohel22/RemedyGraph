@@ -63,5 +63,14 @@
       "status": "SETTLED",
       "item_unit_id": "unit_right"
     }
+  ],
+  "razorpay_payments": [
+    {
+      "razorpay_payment_id": "pay_test_asha_1001",
+      "razorpay_order_id": "order_test_1001",
+      "internal_order_id": "ord_1001",
+      "amount_minor": 499900,
+      "status": "captured"
+    }
   ]
 }

@@ -43,3 +43,23 @@ class IdempotencyConflict(IngestError):
 class WorldValidationError(IngestError):
     def __init__(self, message: str) -> None:
         super().__init__(message, status_code=422)
+
+
+class PaymentNotFound(IngestError):
+    def __init__(self, payment_id: str) -> None:
+        super().__init__(f"payment not found: {payment_id}", status_code=404)
+
+
+class PaymentNotRefundable(IngestError):
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason, status_code=409)
+
+
+class InvalidWebhookSignature(IngestError):
+    def __init__(self) -> None:
+        super().__init__("invalid webhook signature", status_code=400)
+
+
+class RefundPending(IngestError):
+    def __init__(self, message: str) -> None:
+        super().__init__(message, status_code=202)

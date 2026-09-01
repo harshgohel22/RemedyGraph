@@ -7,9 +7,12 @@ from app.db.models import (  # noqa: F401
     Merchant,
     Order,
     OrderLine,
+    RazorpayPayment,
+    RazorpayRefund,
     RemedyRequest,
     RemedyReservation,
     SupportMessage,
+    WebhookEvent,
 )
 
 __all__ = ["Base"]

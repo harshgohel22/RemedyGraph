@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 from app.domain.enums import Channel, Currency, RemedyStatus, RemedyType
-from app.schemas.ingest import MinorUnits
+from app.domain.money import MinorUnits
 
 
 class WorldItemUnitIn(BaseModel):
@@ -63,6 +63,14 @@ class WorldHistoricalRemedyIn(BaseModel):
     item_unit_id: str | None = None
 
 
+class WorldRazorpayPaymentIn(BaseModel):
+    razorpay_payment_id: str = Field(min_length=1)
+    razorpay_order_id: str | None = None
+    internal_order_id: str | None = None
+    amount_minor: MinorUnits
+    status: str = "captured"
+
+
 class WorldIngestRequest(BaseModel):
     merchant_id: str = Field(min_length=1)
     merchant_name: str = Field(min_length=1)
@@ -71,6 +79,7 @@ class WorldIngestRequest(BaseModel):
     orders: list[WorldOrderIn] = []
     support_messages: list[WorldSupportMessageIn] = []
     historical_remedies: list[WorldHistoricalRemedyIn] = []
+    razorpay_payments: list[WorldRazorpayPaymentIn] = []
 
 
 class WorldIngestResponse(BaseModel):
@@ -80,5 +89,6 @@ class WorldIngestResponse(BaseModel):
     unit_count: int
     support_message_count: int
     historical_remedy_count: int
+    payment_count: int
     audit_id: str
     replaced: bool

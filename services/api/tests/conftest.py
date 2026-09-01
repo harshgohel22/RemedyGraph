@@ -6,9 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
+from app.api.deps import get_razorpay_gateway
 from app.db.base import Base
 from app.db.session import create_db_engine, get_db
 from app.main import create_app
+from app.services.razorpay_client import FakeRazorpayGateway
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -19,7 +21,12 @@ def world_earbuds() -> dict:
 
 
 @pytest.fixture
-def client() -> Generator[TestClient, None, None]:
+def razorpay() -> FakeRazorpayGateway:
+    return FakeRazorpayGateway()
+
+
+@pytest.fixture
+def client(razorpay: FakeRazorpayGateway) -> Generator[TestClient, None, None]:
     engine = create_db_engine("sqlite://", static_memory=True)
     TestingSessionLocal = sessionmaker(
         bind=engine,
@@ -42,6 +49,7 @@ def client() -> Generator[TestClient, None, None]:
 
     app = create_app(init_db=False)
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_razorpay_gateway] = lambda: razorpay
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

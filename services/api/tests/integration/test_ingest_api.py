@@ -53,6 +53,7 @@ def test_world_ingest_stores_lineage(client: TestClient, world_earbuds: dict) ->
     assert body["unit_count"] == 3
     assert body["support_message_count"] == 1
     assert body["historical_remedy_count"] == 1
+    assert body["payment_count"] == 1
     assert body["replaced"] is False
     assert body["audit_id"].startswith("aud_")
 
