@@ -43,6 +43,9 @@ class Merchant(Base):
     webhook_events: Mapped[list["WebhookEvent"]] = relationship(
         back_populates="merchant", cascade="all, delete-orphan"
     )
+    compiled_claims: Mapped[list["CompiledClaimRecord"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
 
 
 class Customer(Base):
@@ -237,6 +240,24 @@ class WebhookEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     merchant: Mapped[Merchant] = relationship(back_populates="webhook_events")
+
+
+class CompiledClaimRecord(Base):
+    """Grounded compiler output. One claim per support message; payload is not ledger truth."""
+
+    __tablename__ = "compiled_claims"
+    __table_args__ = (UniqueConstraint("support_message_id", name="uq_compiled_claims_message"),)
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    support_message_id: Mapped[str] = mapped_column(
+        ForeignKey("support_messages.id", ondelete="CASCADE"), nullable=False
+    )
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="compiled_claims")
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"

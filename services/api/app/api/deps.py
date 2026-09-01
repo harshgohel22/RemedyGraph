@@ -2,11 +2,14 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.services.claim_compiler import ClaimCompiler
+from app.services.claim_extractor import ClaimExtractor, build_extractor
 from app.services.razorpay_client import FakeRazorpayGateway, RazorpayGateway, build_gateway
 from app.services.refund_executor import RefundExecutor
 from app.services.webhook_processor import WebhookProcessor
 
 _gateway: RazorpayGateway | None = None
+_extractor: ClaimExtractor | None = None
 
 
 def get_razorpay_gateway() -> RazorpayGateway:
@@ -38,3 +41,22 @@ def get_webhook_processor(
     executor: RefundExecutor = Depends(get_refund_executor),
 ) -> WebhookProcessor:
     return WebhookProcessor(session, executor)
+
+
+def get_claim_extractor() -> ClaimExtractor:
+    global _extractor
+    if _extractor is None:
+        _extractor = build_extractor()
+    return _extractor
+
+
+def reset_claim_extractor() -> None:
+    global _extractor
+    _extractor = None
+
+
+def get_claim_compiler(
+    session: Session = Depends(get_db),
+    extractor: ClaimExtractor = Depends(get_claim_extractor),
+) -> ClaimCompiler:
+    return ClaimCompiler(session, extractor)

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = "whsec_test"
     razorpay_mode: str = "fake"
+    claim_compiler_mode: str = "heuristic"
 
 
 settings = Settings()
