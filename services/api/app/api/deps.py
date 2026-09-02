@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.services.claim_compiler import ClaimCompiler
+from app.services.candidate_retrieval import CandidateRetrieval
 from app.services.claim_extractor import ClaimExtractor, build_extractor
 from app.services.razorpay_client import FakeRazorpayGateway, RazorpayGateway, build_gateway
 from app.services.refund_executor import RefundExecutor
@@ -60,3 +61,7 @@ def get_claim_compiler(
     extractor: ClaimExtractor = Depends(get_claim_extractor),
 ) -> ClaimCompiler:
     return ClaimCompiler(session, extractor)
+
+
+def get_candidate_retrieval(session: Session = Depends(get_db)) -> CandidateRetrieval:
+    return CandidateRetrieval(session)
