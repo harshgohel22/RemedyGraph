@@ -34,6 +34,11 @@ class ClaimNotFound(IngestError):
         super().__init__(f"claim not found: {claim_id}", status_code=404)
 
 
+class LinkNotFound(IngestError):
+    def __init__(self, claim_id: str) -> None:
+        super().__init__(f"incident link not found: {claim_id}", status_code=404)
+
+
 class MerchantExists(IngestError):
     def __init__(self, merchant_id: str) -> None:
         super().__init__(

@@ -46,6 +46,9 @@ class Merchant(Base):
     compiled_claims: Mapped[list["CompiledClaimRecord"]] = relationship(
         back_populates="merchant", cascade="all, delete-orphan"
     )
+    incident_links: Mapped[list["IncidentLinkRecord"]] = relationship(
+        back_populates="merchant", cascade="all, delete-orphan"
+    )
 
 
 class Customer(Base):
@@ -258,6 +261,25 @@ class CompiledClaimRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     merchant: Mapped[Merchant] = relationship(back_populates="compiled_claims")
+
+
+class IncidentLinkRecord(Base):
+    """Grounded linker output. Relation is an input to policy, not a ledger write."""
+
+    __tablename__ = "incident_links"
+    __table_args__ = (
+        UniqueConstraint("claim_id", "candidate_incident_id", name="uq_incident_links_claim_candidate"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(ForeignKey("compiled_claims.id", ondelete="CASCADE"), nullable=False)
+    candidate_incident_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_primary: Mapped[bool] = mapped_column(default=False, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="incident_links")
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"

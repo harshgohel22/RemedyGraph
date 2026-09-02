@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.claim_compiler import ClaimCompiler
 from app.services.candidate_retrieval import CandidateRetrieval
+from app.services.incident_link_service import IncidentLinkService
+from app.services.incident_linker import IncidentLinker, build_linker
 from app.services.claim_extractor import ClaimExtractor, build_extractor
 from app.services.razorpay_client import FakeRazorpayGateway, RazorpayGateway, build_gateway
 from app.services.refund_executor import RefundExecutor
@@ -11,6 +13,7 @@ from app.services.webhook_processor import WebhookProcessor
 
 _gateway: RazorpayGateway | None = None
 _extractor: ClaimExtractor | None = None
+_linker: IncidentLinker | None = None
 
 
 def get_razorpay_gateway() -> RazorpayGateway:
@@ -65,3 +68,23 @@ def get_claim_compiler(
 
 def get_candidate_retrieval(session: Session = Depends(get_db)) -> CandidateRetrieval:
     return CandidateRetrieval(session)
+
+
+def get_incident_linker() -> IncidentLinker:
+    global _linker
+    if _linker is None:
+        _linker = build_linker()
+    return _linker
+
+
+def reset_incident_linker() -> None:
+    global _linker
+    _linker = None
+
+
+def get_incident_link_service(
+    session: Session = Depends(get_db),
+    linker: IncidentLinker = Depends(get_incident_linker),
+    retrieval: CandidateRetrieval = Depends(get_candidate_retrieval),
+) -> IncidentLinkService:
+    return IncidentLinkService(session, linker, retrieval)

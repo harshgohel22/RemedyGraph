@@ -4,6 +4,7 @@ from app.db.models import (  # noqa: F401
     CompiledClaimRecord,
     Customer,
     Entitlement,
+    IncidentLinkRecord,
     ItemUnit,
     Merchant,
     Order,
