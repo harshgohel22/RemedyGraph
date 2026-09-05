@@ -146,6 +146,55 @@ class RemedyRequest(Base):
     support_message: Mapped[SupportMessage] = relationship(back_populates="remedy_requests")
 
 
+class CompiledClaimRecord(Base):
+    """Grounded compiler output. One claim per support message; payload is not ledger truth."""
+
+    __tablename__ = "compiled_claims"
+    __table_args__ = (UniqueConstraint("support_message_id", name="uq_compiled_claims_message"),)
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    support_message_id: Mapped[str] = mapped_column(
+        ForeignKey("support_messages.id", ondelete="CASCADE"), nullable=False
+    )
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="compiled_claims")
+
+
+class IncidentLinkRecord(Base):
+    """Grounded linker output. Relation is an input to policy, not a ledger write."""
+
+    __tablename__ = "incident_links"
+    __table_args__ = (
+        UniqueConstraint("claim_id", "candidate_incident_id", name="uq_incident_links_claim_candidate"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(ForeignKey("compiled_claims.id", ondelete="CASCADE"), nullable=False)
+    candidate_incident_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_primary: Mapped[bool] = mapped_column(default=False, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="incident_links")
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    support_message_id: Mapped[str | None] = mapped_column(String(64))
+    remedy_request_id: Mapped[str | None] = mapped_column(String(64))
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    merchant: Mapped[Merchant] = relationship(back_populates="audit_events")
 
 
 class Entitlement(Base):
@@ -243,53 +292,3 @@ class WebhookEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     merchant: Mapped[Merchant] = relationship(back_populates="webhook_events")
-
-
-class CompiledClaimRecord(Base):
-    """Grounded compiler output. One claim per support message; payload is not ledger truth."""
-
-    __tablename__ = "compiled_claims"
-    __table_args__ = (UniqueConstraint("support_message_id", name="uq_compiled_claims_message"),)
-
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
-    support_message_id: Mapped[str] = mapped_column(
-        ForeignKey("support_messages.id", ondelete="CASCADE"), nullable=False
-    )
-    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
-
-    merchant: Mapped[Merchant] = relationship(back_populates="compiled_claims")
-
-
-class IncidentLinkRecord(Base):
-    """Grounded linker output. Relation is an input to policy, not a ledger write."""
-
-    __tablename__ = "incident_links"
-    __table_args__ = (
-        UniqueConstraint("claim_id", "candidate_incident_id", name="uq_incident_links_claim_candidate"),
-    )
-
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
-    claim_id: Mapped[str] = mapped_column(ForeignKey("compiled_claims.id", ondelete="CASCADE"), nullable=False)
-    candidate_incident_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    is_primary: Mapped[bool] = mapped_column(default=False, nullable=False)
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
-
-    merchant: Mapped[Merchant] = relationship(back_populates="incident_links")
-
-class AuditEvent(Base):
-    __tablename__ = "audit_events"
-
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id", ondelete="CASCADE"), nullable=False)
-    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
-    support_message_id: Mapped[str | None] = mapped_column(String(64))
-    remedy_request_id: Mapped[str | None] = mapped_column(String(64))
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
-
-    merchant: Mapped[Merchant] = relationship(back_populates="audit_events")

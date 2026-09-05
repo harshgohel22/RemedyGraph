@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.api.deps import get_case_evaluator
 from app.evaluation.scenario_schema import PolicyEvaluationRequest
-from app.schemas.decisions import PolicyDecision
+from app.schemas.decisions import CaseEvaluationResponse, PolicyDecision
 from app.schemas.incidents import EntitlementPosition
+from app.services.case_evaluator import CaseEvaluator
+from app.services.entitlement_ledger import LedgerError
+from app.services.exceptions import IngestError
 from app.services.policy_engine import PolicyInvariantError, decide
 
 router = APIRouter(prefix="/v1/evaluate", tags=["evaluate"])
@@ -27,4 +31,17 @@ def evaluate_scenario(scenario: PolicyEvaluationRequest) -> PolicyDecision:
             semantic_confidence=scenario.semantic_confidence,
         )
     except PolicyInvariantError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/claims/{claim_id}", response_model=CaseEvaluationResponse)
+def evaluate_claim(
+    claim_id: str,
+    evaluator: CaseEvaluator = Depends(get_case_evaluator),
+) -> CaseEvaluationResponse:
+    try:
+        return evaluator.evaluate(claim_id)
+    except IngestError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    except (PolicyInvariantError, LedgerError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

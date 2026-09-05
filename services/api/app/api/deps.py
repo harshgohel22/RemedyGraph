@@ -2,11 +2,13 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.services.case_evaluator import CaseEvaluator
 from app.services.claim_compiler import ClaimCompiler
+from app.services.claim_extractor import ClaimExtractor, build_extractor
 from app.services.candidate_retrieval import CandidateRetrieval
 from app.services.incident_link_service import IncidentLinkService
 from app.services.incident_linker import IncidentLinker, build_linker
-from app.services.claim_extractor import ClaimExtractor, build_extractor
+from app.services.ledger_service import LedgerService
 from app.services.razorpay_client import FakeRazorpayGateway, RazorpayGateway, build_gateway
 from app.services.refund_executor import RefundExecutor
 from app.services.webhook_processor import WebhookProcessor
@@ -88,3 +90,10 @@ def get_incident_link_service(
     retrieval: CandidateRetrieval = Depends(get_candidate_retrieval),
 ) -> IncidentLinkService:
     return IncidentLinkService(session, linker, retrieval)
+
+
+def get_case_evaluator(
+    session: Session = Depends(get_db),
+    links: IncidentLinkService = Depends(get_incident_link_service),
+) -> CaseEvaluator:
+    return CaseEvaluator(session, links, LedgerService(session))

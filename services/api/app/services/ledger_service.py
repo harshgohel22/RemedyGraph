@@ -49,6 +49,38 @@ class LedgerService:
         self.session.flush()
         return self.get_position(merchant_id, incident_id)
 
+    def ensure_incident(
+        self,
+        merchant_id: str,
+        incident_id: str,
+        allowed_entitlement_minor: int,
+        settled_minor: int = 0,
+    ) -> EntitlementPosition:
+        """Create the incident row once. Historical settled is a fact; this is not a model write."""
+
+        if allowed_entitlement_minor < 0 or settled_minor < 0:
+            raise LedgerError("entitlement amounts must be >= 0")
+        if settled_minor > allowed_entitlement_minor:
+            raise LedgerError("historical settled exceeds allowed entitlement")
+        merchant = self.session.get(models.Merchant, merchant_id)
+        if merchant is None:
+            raise MerchantNotFound(merchant_id)
+        existing = self.session.get(models.Entitlement, (merchant_id, incident_id))
+        if existing is not None:
+            return self.get_position(merchant_id, incident_id)
+        self.session.add(
+            models.Entitlement(
+                merchant_id=merchant_id,
+                incident_id=incident_id,
+                allowed_minor=allowed_entitlement_minor,
+                settled_minor=settled_minor,
+                reserved_minor=0,
+                version=1,
+            )
+        )
+        self.session.flush()
+        return self.get_position(merchant_id, incident_id)
+
     def get_position(self, merchant_id: str, incident_id: str) -> EntitlementPosition:
         row = self.session.get(models.Entitlement, (merchant_id, incident_id))
         if row is None:

@@ -12,6 +12,13 @@ def incident_id_for_new_claim(claim_id: str) -> str:
     return f"inc_{claim_id}"
 
 
+def source_id_from_incident(incident_id: str) -> str:
+    prefix = "inc_"
+    if incident_id.startswith(prefix):
+        return incident_id[len(prefix) :]
+    return incident_id
+
+
 def ground_link(
     *,
     claim: CompiledClaim,

@@ -39,6 +39,19 @@ class LinkNotFound(IngestError):
         super().__init__(f"incident link not found: {claim_id}", status_code=404)
 
 
+class AttemptAlreadySettled(IngestError):
+    def __init__(self, remedy_request_id: str) -> None:
+        super().__init__(f"attempt already settled: {remedy_request_id}", status_code=409)
+
+
+class EntitlementCapUnknown(IngestError):
+    def __init__(self) -> None:
+        super().__init__(
+            "cannot determine allowed entitlement without an attested order",
+            status_code=422,
+        )
+
+
 class MerchantExists(IngestError):
     def __init__(self, merchant_id: str) -> None:
         super().__init__(
@@ -78,3 +91,4 @@ class InvalidWebhookSignature(IngestError):
 class RefundPending(IngestError):
     def __init__(self, message: str) -> None:
         super().__init__(message, status_code=202)
+
