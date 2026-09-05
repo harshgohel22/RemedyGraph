@@ -60,6 +60,17 @@ def summarize(outcomes: list[CaseOutcome]) -> MetricReport:
         and row.predicted_relation is not IncidentRelation.SAME_INCIDENT
     )
     documented = [row.case_id for row in outcomes if row.documented_miss]
+    gold_prevent = sum(1 for row in outcomes if row.gold_decision is Decision.PREVENT_DUPLICATE)
+    gold_allow = sum(1 for row in outcomes if row.gold_decision is Decision.ALLOW)
+    intervention = sum(
+        1
+        for row in outcomes
+        if row.gold_decision is Decision.PREVENT_DUPLICATE
+        and row.predicted_decision in {Decision.PREVENT_DUPLICATE, Decision.REVIEW}
+    )
+    automated = sum(
+        1 for row in outcomes if row.predicted_decision in {Decision.ALLOW, Decision.PREVENT_DUPLICATE}
+    )
     return MetricReport(
         case_count=len(outcomes),
         prevent_precision=_ratio(tp, tp + fp),
@@ -75,5 +86,10 @@ def summarize(outcomes: list[CaseOutcome]) -> MetricReport:
         documented_miss_confirmed=any(
             row.documented_miss and (row.prevent_fn or row.unsafe_miss) for row in outcomes
         ),
+        intervention_recall=_ratio(intervention, gold_prevent),
+        false_positive_rate=_ratio(fp, gold_allow),
+        review_rate=_ratio(sum(1 for row in outcomes if row.predicted_decision is Decision.REVIEW), len(outcomes)) or 0.0,
+        automation_coverage=_ratio(automated, len(outcomes)) or 0.0,
+        prevented_overcompensation_minor=sum(row.proposed_minor for row in outcomes if row.prevent_tp),
         outcomes=outcomes,
     )

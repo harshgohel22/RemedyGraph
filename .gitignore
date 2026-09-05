@@ -20,4 +20,8 @@ dist/
 htmlcov/
 coverage.xml
 *.log
-
+node_modules/
+.next/
+*.tsbuildinfo
+repomix-output.xml
+.firecrawl/

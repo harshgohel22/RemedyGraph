@@ -169,12 +169,14 @@ class LedgerService:
         return self._to_record(row)
 
     def release(self, merchant_id: str, idempotency_key: str) -> ReservationRecord:
-        return self._drop(merchant_id, idempotency_key, RemedyStatus.RELEASED)
+        return self._drop_reservation(merchant_id, idempotency_key, RemedyStatus.RELEASED)
 
     def fail(self, merchant_id: str, idempotency_key: str) -> ReservationRecord:
-        return self._drop(merchant_id, idempotency_key, RemedyStatus.FAILED)
+        return self._drop_reservation(merchant_id, idempotency_key, RemedyStatus.FAILED)
 
-    def _drop(self, merchant_id: str, idempotency_key: str, status: RemedyStatus) -> ReservationRecord:
+    def _drop_reservation(
+        self, merchant_id: str, idempotency_key: str, status: RemedyStatus
+    ) -> ReservationRecord:
         row = self._require_reserved(merchant_id, idempotency_key)
         entitlement = self._lock_entitlement(merchant_id, row.incident_id)
         entitlement.reserved_minor -= row.amount_minor

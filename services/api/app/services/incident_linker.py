@@ -6,6 +6,7 @@ from app.domain.enums import IncidentRelation, MatchReason
 from app.schemas.claims import CompiledClaim
 from app.schemas.incidents import LinkDraft
 from app.schemas.retrieval import RetrievalHit
+from app.services.llm_structured import OpenAIStructuredParser, StructuredParser
 
 
 @dataclass(frozen=True)
@@ -36,8 +37,62 @@ class FakeIncidentLinker:
         return self.draft
 
 
+_LINK_SYSTEM = """You compare one grounded customer claim to one prior support case.
+
+You do not mint incident ids. You do not authorize refunds or write a ledger.
+SAME_INCIDENT only when the same physical defect is clearly the same event.
+If attested order ids conflict, return NEW_INCIDENT.
+If you cannot prove SAME, return UNCERTAIN with requires_review=true.
+Prefer UNCERTAIN over a reckless SAME. A false SAME blocks a legitimate new claim.
+Do not treat "the customer has only one order" as evidence.
+"""
+
+
+class LLMIncidentLinker:
+    """Hosted model relation draft. ground_link still downgrades unsafe SAME after this returns."""
+
+    model_version = "openai-link-v1"
+
+    def __init__(self, parser: StructuredParser | None = None) -> None:
+        self.parser = parser or OpenAIStructuredParser()
+
+    def assess(self, request: LinkRequest) -> LinkDraft:
+        if request.hit is None:
+            return LinkDraft(
+                relation=IncidentRelation.NEW_INCIDENT,
+                confidence=1.0,
+                evidence_for=["no prior cases for this customer"],
+            )
+        hit = request.hit
+        claim = request.claim
+        user = (
+            "grounded_claim:\n"
+            f"  order_reference: {claim.order_reference}\n"
+            f"  unit_reference: {claim.unit_reference}\n"
+            f"  incident_type: {claim.incident_type}\n"
+            f"  incident_description: {claim.incident_description}\n"
+            "prior_case:\n"
+            f"  channel: {hit.channel.value}\n"
+            f"  order_reference: {hit.order_reference}\n"
+            f"  overlap_score: {hit.overlap_score}\n"
+            f"  shared_tokens: {hit.shared_tokens}\n"
+            f"  match_reasons: {[reason.value for reason in hit.match_reasons]}\n"
+            f"  body: {hit.body}\n"
+            f"  remedies: {[{'type': r.remedy_type.value, 'status': r.status.value, 'unit': r.item_unit_id} for r in hit.remedies]}\n"
+        )
+        try:
+            return self.parser.parse(system=_LINK_SYSTEM, user=user, response_model=LinkDraft)
+        except Exception:
+            return LinkDraft(
+                relation=IncidentRelation.UNCERTAIN,
+                confidence=0.0,
+                evidence_against=["linker unavailable; fail closed"],
+                requires_review=True,
+            )
+
+
 class HeuristicIncidentLinker:
-    """Deterministic stand-in until a live LLM is wired. Still must pass grounding."""
+    """Offline stand-in. Still must pass grounding. Used for tests and frozen held-out eval."""
 
     model_version = "heuristic-v1"
 
@@ -105,4 +160,6 @@ def build_linker() -> IncidentLinker:
     mode = settings.incident_linker_mode.lower()
     if mode == "fake":
         return FakeIncidentLinker()
+    if mode == "llm":
+        return LLMIncidentLinker()
     return HeuristicIncidentLinker()

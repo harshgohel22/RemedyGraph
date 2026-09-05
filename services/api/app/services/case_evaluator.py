@@ -1,6 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import re
+
 from app.db import models
 from app.domain.enums import AuditEventType, Decision, ReasonCode, RemedyStatus
 from app.domain.ids import new_id
@@ -17,6 +19,9 @@ from app.services.incident_link_grounding import source_id_from_incident
 from app.services.incident_link_service import IncidentLinkService
 from app.services.ledger_service import LedgerService
 from app.services.policy_engine import decide
+
+
+_UNIT_HINT = re.compile(r"\b(left|right)\b", re.IGNORECASE)
 
 
 def historical_settled_minor(remedies: list[models.RemedyRequest]) -> int:
@@ -109,14 +114,21 @@ class CaseEvaluator:
             settled_seed,
         )
         self._attach_incident(current, history, primary.candidate_incident_id)
+        order_ids = self._order_ids(claim, record.support_message_id, history)
+        unit_ambiguous = self._unit_requires_review(claim, order_ids)
         decision = decide(
             position,
             primary.relation,
             current.entitlement_consumption_minor,
-            requires_review=primary.requires_review,
+            requires_review=primary.requires_review or unit_ambiguous,
             contradictory_fields=primary.contradictory_fields,
             semantic_confidence=primary.confidence,
         )
+        if unit_ambiguous:
+            reasons = list(decision.reason_codes)
+            if ReasonCode.UNIT_AMBIGUOUS not in reasons:
+                reasons.append(ReasonCode.UNIT_AMBIGUOUS)
+            decision = decision.model_copy(update={"reason_codes": reasons})
         if decision.decision is Decision.REVIEW:
             current.status = RemedyStatus.REVIEW_REQUIRED.value
         self.session.flush()
@@ -203,6 +215,22 @@ class CaseEvaluator:
         if not prices:
             raise EntitlementCapUnknown()
         return max(prices)
+
+    def _unit_requires_review(self, claim: CompiledClaim, order_ids: set[str]) -> bool:
+        """Two sibling units and no left/right hint: do not guess which one failed."""
+
+        if claim.unit_reference:
+            return False
+        if _UNIT_HINT.search(claim.incident_description or ""):
+            return False
+        count = 0
+        for order_id in order_ids:
+            order = self.session.get(models.Order, order_id)
+            if order is None:
+                continue
+            for line in order.lines:
+                count += len(line.units)
+        return count > 1
 
     def _attach_incident(
         self,

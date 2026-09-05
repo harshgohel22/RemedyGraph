@@ -174,6 +174,44 @@ def test_duplicate_webhook_does_not_double_settle(client: TestClient, razorpay: 
     assert position.json()["settled_entitlement_minor"] == 499900
 
 
+def test_failed_webhook_after_settle_does_not_crash_or_unpay(
+    client: TestClient, razorpay: FakeRazorpayGateway
+) -> None:
+    """Out-of-order refund.failed must not raise ReservationNotActive or unwind a settled ledger."""
+
+    _bootstrap(client)
+    created = client.post("/v1/refunds", json=_refund_payload())
+    assert created.json()["status"] == RemedyStatus.SETTLED.value
+    raw, headers = _signed_webhook(created.json()["razorpay_refund_id"], "refund.failed", "evt_late_fail")
+    hook = client.post("/v1/webhooks/razorpay", content=raw, headers=headers)
+    assert hook.status_code == 200
+    position = client.get(
+        "/v1/ledger/entitlements/inc_right_audio",
+        params={"merchant_id": "mch_aurum"},
+    )
+    assert position.json()["settled_entitlement_minor"] == 499900
+    assert position.json()["reserved_entitlement_minor"] == 0
+
+
+def test_failed_webhook_releases_active_reservation(
+    client: TestClient, razorpay: FakeRazorpayGateway
+) -> None:
+    _bootstrap(client)
+    razorpay.immediate_status = "created"
+    created = client.post("/v1/refunds", json=_refund_payload())
+    assert created.json()["status"] == RemedyStatus.PROCESSING.value
+    raw, headers = _signed_webhook(created.json()["razorpay_refund_id"], "refund.failed", "evt_fail")
+    hook = client.post("/v1/webhooks/razorpay", content=raw, headers=headers)
+    assert hook.status_code == 200
+    position = client.get(
+        "/v1/ledger/entitlements/inc_right_audio",
+        params={"merchant_id": "mch_aurum"},
+    )
+    assert position.json()["reserved_entitlement_minor"] == 0
+    assert position.json()["settled_entitlement_minor"] == 0
+    assert position.json()["remaining_minor"] == 499900
+
+
 def test_invalid_webhook_signature_is_rejected(client: TestClient, razorpay: FakeRazorpayGateway) -> None:
     _bootstrap(client)
     razorpay.immediate_status = "created"

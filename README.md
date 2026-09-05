@@ -1,29 +1,31 @@
 # RemedyGraph
 
-A compensation-integrity verifier for the Razorpay AI Buildathon 2026 **AI Risk Manager** track.
+Compensation-integrity verifier for the Razorpay AI Buildathon 2026 **AI Risk Manager** track.
 
-Support teams pay the same defect twice when a customer switches channels. Asha gets a WhatsApp replacement for a dead right earbud, then emails “no audio, refund me.” Two agents, two systems, one exhausted entitlement.
+**One class of loss:** duplicate compensation after a channel switch.
 
-RemedyGraph compiles that message, finds prior cases, decides whether they are the same incident, and **refuses to move money** when the ledger says the cap is gone.
+Asha gets a WhatsApp replacement for a dead right earbud, then emails “no audio, refund me.” Two agents, two systems, one exhausted entitlement. RemedyGraph compiles that message, finds prior cases, decides whether they are the same incident, and **refuses to move money** when the ledger says the cap is gone.
 
 > AI interprets ambiguous language and relationships.
 > Deterministic code controls financial truth and execution.
+
+The model never writes `allowed` / `settled` / `reserved`, never mints order or incident ids, and never calls Razorpay. Defense only.
 
 ## What this repo proves
 
 - Duplicate compensation after a channel switch is detected and blocked
 - Entitlements are integer paise; `settled + reserved <= allowed`
 - Two agents cannot reserve the same remaining rupees
-- Razorpay Test Mode refunds are reserved first, then reconciled by signed webhooks
-- Held-out precision/recall and an honest false-positive cost live in [`docs/EVALUATION.md`](docs/EVALUATION.md)
-- The architecture map is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- A 5-minute pitch script is in [`docs/PITCH.md`](docs/PITCH.md)
+- Razorpay-shaped refunds: reserve first, settle on success, signed webhooks, idempotent retries
+- Held-out **PREVENT** precision **62.5%**, recall **83.3%**, false-positive cost **₹14,997**, unsafe miss **₹0** — full write-up in [`docs/EVALUATION.md`](docs/EVALUATION.md)
 
-There is no product UI. The API is the product.
+Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Product: [`docs/PRODUCT.md`](docs/PRODUCT.md) · Threat model: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md)
+
+The Next.js console in `apps/web` is a demo surface. The FastAPI app in `services/api` is the source of truth.
 
 ## Quick start
 
-Python 3.12+. From the repo root:
+Python 3.12+ and Node 22+. No OpenAI key. No Razorpay key. Defaults are `CLAIM_COMPILER_MODE=heuristic` and `RAZORPAY_MODE=fake`.
 
 ```bash
 cd services/api
@@ -32,31 +34,34 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 cp ../../.env.example .env
 pytest -q
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Run the API:
+Second terminal:
 
 ```bash
-cd services/api
-source .venv/bin/activate
-uvicorn app.main:app --reload
+cd apps/web
+npm install
+npm run dev
 ```
 
-Health check: `GET /health`.
+Open http://127.0.0.1:3000
 
-Held-out metrics:
+1. **Run prevent** — WhatsApp replacement already settled; email wants cash; `PREVENT_DUPLICATE`
+2. **Run allow** — first named failure; fake refund settles
+3. **Run review** — “one of the earbuds”; no unit guess; no money moved
+4. **Evaluation** — frozen held-out report from the API
+
+Health: `GET http://127.0.0.1:8000/health`
+
+Held-out metrics from the CLI:
 
 ```bash
 cd services/api
 python -m app.evaluation
 ```
 
-Earbud demo (prevent a duplicate, then pay a first claim):
-
-```bash
-cd services/api
-python -m app.evaluation.demo
-```
+Optional: set `CLAIM_COMPILER_MODE=llm` and `INCIDENT_LINKER_MODE=llm` plus `OPENAI_API_KEY` to swap the **draft** generator. `ground_draft` and `ground_link` still run. The ledger does not change.
 
 ## Pipeline
 
@@ -82,8 +87,6 @@ External reconciliation
 Audit trail
 ```
 
-The compiler and linker may guess. They cannot invent identifiers, change balances, or call Razorpay. Policy and the ledger can refuse them.
-
 ## Demo world
 
 `services/api/tests/fixtures/world_earbuds.json`
@@ -105,9 +108,12 @@ The compiler and linker may guess. They cannot invent identifiers, change balanc
 | `POST /v1/evaluate/claims/{id}/execute` | Refund only after ALLOW | Deterministic money |
 | `POST /v1/evaluate/scenario` | Policy on structured JSON | Deterministic policy |
 | `POST /v1/ledger/reservations` | Lock remaining entitlement | Deterministic money |
-| `POST /v1/refunds` | Razorpay Test Mode refund | Deterministic money |
+| `POST /v1/refunds` | Razorpay-shaped refund | Deterministic money |
 | `POST /v1/webhooks/razorpay` | Signed, deduplicated events | Deterministic money |
 | `GET /v1/audit` | Ordered event trail | Deterministic recording |
+| `GET /v1/demo/scenarios` | Allow / review / prevent | Deterministic demo |
+| `POST /v1/demo/run` | Full pipeline for one demo case | Orchestration, not AI |
+| `GET /v1/evaluate/heldout` | Frozen held-out metrics | Deterministic scoring |
 
 ## Tests
 
@@ -116,13 +122,14 @@ cd services/api
 pytest -q
 ```
 
-Includes unit tests, API tests, a reservation race, and the frozen held-out set.
-
-Postgres in `docker-compose.yml` is optional. Tests use in-memory SQLite.
+Unit tests, API tests, a reservation race, demo back-to-back runs, and the frozen held-out set. Tests use in-memory SQLite. Postgres is optional via `docker-compose.yml`.
 
 ## Honest limits
 
-- Compiler and linker are deterministic heuristics with the same grounding a live model must pass. Swap the model; do not swap the gate.
-- Entitlement cap is the max attested unit price, not a learned policy.
-- False-positive cost is real: generic overlap can block a legitimate new claim. See the evaluation doc.
+- Compiler and linker default to heuristics so held-out numbers stay frozen. A hosted LLM is an optional draft generator behind the same grounding.
+- Retrieval is token and identifier overlap, not embeddings. Paraphrases with no shared tokens are a known miss (`holdout_paraphrase_miss`).
+- Held-out set is 16 labeled timelines, not 1,000. Label quality was preferred over a round number.
+- Razorpay is a fake Test Mode stand-in unless `RAZORPAY_MODE=live` and test keys are set. No real money in the default path.
+- Entitlement cap is the max attested unit price, not a full merchant policy engine.
+- Replacement and store credit are simulated. Only cash refunds call the payment gateway.
 - This is defense-only. It does not generate attacks, find card data, or bypass payments.

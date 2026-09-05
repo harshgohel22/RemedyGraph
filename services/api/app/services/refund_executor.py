@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import models
 from app.domain.enums import AuditEventType, RemedyStatus
 from app.domain.ids import new_id
+from app.services.entitlement_ledger import ReservationNotActive
 from app.services.exceptions import PaymentNotFound, PaymentNotRefundable
 from app.services.ledger_service import LedgerService
 from app.services.razorpay_client import (
@@ -86,14 +87,17 @@ class RefundExecutor:
         if row is None:
             return None
         row.razorpay_refund_id = result.razorpay_refund_id
-        row.status = self._map_status(result.status)
         if result.status == "processed":
             self._settle(row.merchant_id, row.idempotency_key, row)
         elif result.status == "failed":
-            reservation = self.ledger.get_reservation(row.merchant_id, row.idempotency_key)
-            if reservation is not None and reservation.status is RemedyStatus.RESERVED:
+            try:
                 self.ledger.fail(row.merchant_id, row.idempotency_key)
-            row.status = RemedyStatus.FAILED.value
+            except ReservationNotActive:
+                pass
+            if row.status != RemedyStatus.SETTLED.value:
+                row.status = RemedyStatus.FAILED.value
+        else:
+            row.status = self._map_status(result.status)
         self.session.flush()
         return row
 

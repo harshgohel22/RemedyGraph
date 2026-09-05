@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import get_case_evaluator, get_case_executor
 from app.evaluation.scenario_schema import PolicyEvaluationRequest
+from app.evaluation.schema import MetricReport
 from app.schemas.decisions import CaseEvaluationResponse, PolicyDecision
 from app.schemas.execution import CaseExecutionResponse
 from app.schemas.incidents import EntitlementPosition
@@ -60,3 +61,10 @@ def execute_claim(
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
     except (PolicyInvariantError, LedgerError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/heldout", response_model=MetricReport)
+def heldout_report() -> MetricReport:
+    from app.evaluation.runner import run_heldout
+
+    return run_heldout()

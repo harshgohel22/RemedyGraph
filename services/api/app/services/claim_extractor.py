@@ -5,6 +5,7 @@ from typing import Protocol
 from app.core.config import settings
 from app.domain.enums import Channel, IncidentType
 from app.schemas.claims import ClaimDraft, ExtractedFact
+from app.services.llm_structured import OpenAIStructuredParser, StructuredParser
 
 
 @dataclass(frozen=True)
@@ -34,8 +35,51 @@ class FakeClaimExtractor:
         return self.draft
 
 
+_CLAIM_SYSTEM = """You extract a customer-support incident claim as structured data.
+
+You do not authorize money, refunds, replacements, or ledger writes.
+You do not invent order, unit, product, payment, or claim identifiers.
+If an identifier is not written in the customer message (or the ingest order reference), leave it null.
+requested_amount_minor is integer paise. Set it only if that exact integer appears in the message. Do not convert rupees to paise.
+unknown_fields must list every identifier or amount you left null.
+incident_description restates the defect in one or two sentences. It is not a policy decision.
+"""
+
+
+class LLMClaimExtractor:
+    """Hosted model draft generator. Grounding still drops unattested IDs after this returns."""
+
+    def __init__(self, parser: StructuredParser | None = None) -> None:
+        self.parser = parser or OpenAIStructuredParser()
+
+    def extract(self, request: ExtractRequest) -> ClaimDraft:
+        user = (
+            f"channel: {request.channel.value}\n"
+            f"occurred_at: {request.occurred_at.isoformat()}\n"
+            f"ingest_order_reference: {request.ingest_order_reference or 'null'}\n"
+            f"message:\n{request.body}"
+        )
+        try:
+            return self.parser.parse(system=_CLAIM_SYSTEM, user=user, response_model=ClaimDraft)
+        except Exception:
+            return ClaimDraft(
+                incident_description=request.body,
+                incident_time=request.occurred_at.isoformat(),
+                order_reference=None,
+                product_reference=None,
+                unit_reference=None,
+                requested_amount_minor=None,
+                unknown_fields=[
+                    "order_reference",
+                    "product_reference",
+                    "unit_reference",
+                    "requested_amount_minor",
+                ],
+            )
+
+
 class HeuristicClaimExtractor:
-    """Deterministic stand-in until a live LLM is wired. Still must pass grounding."""
+    """Offline stand-in. Still must pass grounding. Used for tests and frozen held-out eval."""
 
     def extract(self, request: ExtractRequest) -> ClaimDraft:
         body = request.body
@@ -80,6 +124,8 @@ def build_extractor() -> ClaimExtractor:
     mode = settings.claim_compiler_mode.lower()
     if mode == "fake":
         return FakeClaimExtractor()
+    if mode == "llm":
+        return LLMClaimExtractor()
     return HeuristicClaimExtractor()
 
 

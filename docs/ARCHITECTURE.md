@@ -4,7 +4,7 @@ RemedyGraph is a verifier, not a chatbot. One proposed remedy is checked against
 
 ## Who uses it
 
-A support agent (or a ticket system) submits a customer message and a proposed refund, replacement, or store credit. A risk reviewer sees `REVIEW` cases. The ledger, not the reviewer, is the source of truth for balances.
+A support agent (or a ticket system) submits a customer message and a proposed refund, replacement, or store credit. The Next.js console in `apps/web` is that agent surface: intake, investigation, decision/ledger, evaluation.
 
 ## The boundary
 
@@ -55,7 +55,7 @@ ingest  →  compile  →  retrieve  →  link  →  policy  →  ledger  →  R
 
 ## What is not in this architecture
 
-No graph database. No multi-agent planner. No UI. No live LLM in the default path. The heuristic compiler/linker is a stand-in that still goes through grounding, so a real model can replace it without touching money code.
+No graph database. No multi-agent planner. Default compiler/linker are heuristics so held-out scores stay frozen. Set `CLAIM_COMPILER_MODE=llm` / `INCIDENT_LINKER_MODE=llm` to swap in a hosted model as the draft generator; grounding and the ledger stay the same. The Next.js console is a demo surface over the same API; it cannot write the ledger except by calling ALLOW execute.
 
 ## Storage
 

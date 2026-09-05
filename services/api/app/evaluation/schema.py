@@ -82,4 +82,9 @@ class MetricReport(BaseModel):
     review_count: int
     documented_miss_ids: list[str]
     documented_miss_confirmed: bool
+    intervention_recall: float | None = None
+    false_positive_rate: float | None = None
+    review_rate: float = 0.0
+    automation_coverage: float = 0.0
+    prevented_overcompensation_minor: int = 0
     outcomes: list[CaseOutcome]

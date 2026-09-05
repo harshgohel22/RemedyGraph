@@ -2,10 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import models
-from app.domain.enums import AuditEventType, Decision, RemedyStatus
+from app.domain.enums import AuditEventType, Decision, RemedyStatus, RemedyType
 from app.domain.ids import new_id
 from app.schemas.claims import CompiledClaim
-from app.schemas.execution import CaseExecutionResponse
+from app.schemas.execution import CaseExecutionResponse, SimulatedRemedy
 from app.schemas.refunds import CashRefundResponse
 from app.services.case_evaluator import CaseEvaluator
 from app.services.exceptions import PaymentNotFound
@@ -41,10 +41,13 @@ class CaseExecutor:
                 blocked_reason=evaluation.decision.decision.value,
             )
 
-        claim = CompiledClaim.model_validate(record.payload)
-        payment = self._payment_for(record, claim)
         current = self.session.get(models.RemedyRequest, evaluation.remedy_request_id)
         assert current is not None
+        if current.remedy_type != RemedyType.CASH_REFUND.value:
+            return self._simulate(record, current, evaluation, claim_id)
+
+        claim = CompiledClaim.model_validate(record.payload)
+        payment = self._payment_for(record, claim)
         row = self.refunds.execute_cash_refund(
             record.merchant_id,
             evaluation.incident_id,
@@ -83,6 +86,67 @@ class CaseExecutor:
                 idempotency_key=row.idempotency_key,
             ),
         )
+
+    def _simulate(
+        self,
+        record: models.CompiledClaimRecord,
+        current: models.RemedyRequest,
+        evaluation,
+        claim_id: str,
+    ) -> CaseExecutionResponse:
+        key = f"exec_{current.id}"
+        self.evaluator.ledger.reserve(
+            record.merchant_id,
+            evaluation.incident_id,
+            current.entitlement_consumption_minor,
+            key,
+            current.id,
+        )
+        self.evaluator.ledger.settle(record.merchant_id, key)
+        current.status = RemedyStatus.SETTLED.value
+        replacement_unit_id = None
+        if current.remedy_type == RemedyType.REPLACEMENT.value:
+            replacement_unit_id = self._spawn_replacement_unit(current)
+        simulated = SimulatedRemedy(
+            remedy_type=RemedyType(current.remedy_type),
+            status=RemedyStatus.SETTLED,
+            amount_minor=current.entitlement_consumption_minor,
+            replacement_unit_id=replacement_unit_id,
+        )
+        self._audit(
+            record.merchant_id,
+            current.id,
+            AuditEventType.REMEDY_SIMULATED,
+            {
+                "claim_id": claim_id,
+                "remedy_type": current.remedy_type,
+                "replacement_unit_id": replacement_unit_id,
+            },
+        )
+        self.session.flush()
+        return CaseExecutionResponse(
+            evaluation=evaluation,
+            executed=True,
+            simulated=simulated,
+        )
+
+    def _spawn_replacement_unit(self, current: models.RemedyRequest) -> str | None:
+        parent_id = current.item_unit_id
+        if parent_id is None:
+            return None
+        parent = self.session.get(models.ItemUnit, parent_id)
+        if parent is None:
+            return None
+        unit_id = new_id("unit")
+        self.session.add(
+            models.ItemUnit(
+                id=unit_id,
+                order_line_id=parent.order_line_id,
+                product_id=parent.product_id,
+                parent_unit_id=parent.id,
+            )
+        )
+        return unit_id
 
     def _payment_for(self, record: models.CompiledClaimRecord, claim: CompiledClaim) -> models.RazorpayPayment:
         message = self.session.get(models.SupportMessage, record.support_message_id)

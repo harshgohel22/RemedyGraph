@@ -4,9 +4,11 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.case_evaluator import CaseEvaluator
 from app.services.case_executor import CaseExecutor
+from app.services.demo_service import DemoService
 from app.services.claim_compiler import ClaimCompiler
 from app.services.claim_extractor import ClaimExtractor, build_extractor
 from app.services.candidate_retrieval import CandidateRetrieval
+from app.services.ingest_service import IngestService
 from app.services.incident_link_service import IncidentLinkService
 from app.services.incident_linker import IncidentLinker, build_linker
 from app.services.ledger_service import LedgerService
@@ -106,3 +108,13 @@ def get_case_executor(
     refunds: RefundExecutor = Depends(get_refund_executor),
 ) -> CaseExecutor:
     return CaseExecutor(session, evaluator, refunds)
+
+
+def get_demo_service(
+    session: Session = Depends(get_db),
+    compiler: ClaimCompiler = Depends(get_claim_compiler),
+    retrieval: CandidateRetrieval = Depends(get_candidate_retrieval),
+    links: IncidentLinkService = Depends(get_incident_link_service),
+    executor: CaseExecutor = Depends(get_case_executor),
+) -> DemoService:
+    return DemoService(session, IngestService(session), compiler, retrieval, links, executor)
