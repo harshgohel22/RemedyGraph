@@ -21,7 +21,8 @@ def decide(
     contradictions = contradictory_fields or []
     remaining_before = _remaining(position)
 
-    if requires_review or contradictions:
+    # A NEW label may carry the identifier clash that proved it is new. That is not a review trigger.
+    if requires_review or (contradictions and relation is not IncidentRelation.NEW_INCIDENT):
         return _result(
             position,
             relation,

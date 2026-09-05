@@ -101,6 +101,18 @@ def test_conflicting_orders_cannot_stay_same() -> None:
     )
     assert grounded.relation is IncidentRelation.NEW_INCIDENT
     assert "order_reference" in grounded.contradictory_fields
+    assert grounded.candidate_incident_id == "inc_clm_email"
+
+
+def test_new_incident_opens_its_own_ledger_key() -> None:
+    grounded = ground_link(
+        claim=_claim(),
+        hit=_invoice(),
+        draft=LinkDraft(relation=IncidentRelation.NEW_INCIDENT, confidence=0.7),
+        model_version="heuristic-v1",
+    )
+    assert grounded.relation is IncidentRelation.NEW_INCIDENT
+    assert grounded.candidate_incident_id == "inc_clm_email"
 
 
 def test_conflicting_units_become_partial() -> None:

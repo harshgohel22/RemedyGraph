@@ -2,10 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import models
-from app.domain.enums import AuditEventType, Decision, RemedyStatus
+from app.domain.enums import AuditEventType, Decision, ReasonCode, RemedyStatus
 from app.domain.ids import new_id
 from app.schemas.claims import CompiledClaim
 from app.schemas.decisions import CaseEvaluationResponse, PolicyDecision
+from app.schemas.incidents import EntitlementPosition
 from app.services.exceptions import (
     AttemptAlreadySettled,
     AttemptNotFound,
@@ -48,11 +49,58 @@ class CaseEvaluator:
             raise AttemptAlreadySettled(current.id)
 
         history = self._history_for_incident(record.merchant_id, primary.candidate_incident_id)
-        allowed = self._allowed_minor(
-            record.merchant_id,
-            claim.customer_id,
-            order_ids=self._order_ids(claim, record.support_message_id, history),
-        )
+        try:
+            allowed = self._allowed_minor(
+                record.merchant_id,
+                claim.customer_id,
+                order_ids=self._order_ids(claim, record.support_message_id, history),
+            )
+        except EntitlementCapUnknown:
+            position = EntitlementPosition(
+                incident_id=primary.candidate_incident_id,
+                allowed_entitlement_minor=0,
+                settled_entitlement_minor=0,
+                reserved_entitlement_minor=0,
+            )
+            decision = decide(
+                position,
+                primary.relation,
+                current.entitlement_consumption_minor,
+                requires_review=True,
+                contradictory_fields=primary.contradictory_fields,
+                semantic_confidence=primary.confidence,
+            )
+            reasons = list(decision.reason_codes)
+            if ReasonCode.ENTITLEMENT_CAP_UNKNOWN not in reasons:
+                reasons.append(ReasonCode.ENTITLEMENT_CAP_UNKNOWN)
+            decision = decision.model_copy(update={"reason_codes": reasons})
+            if decision.decision is Decision.REVIEW:
+                current.status = RemedyStatus.REVIEW_REQUIRED.value
+            self.session.flush()
+            decision = decision.model_copy(
+                update={
+                    "audit_id": self._audit(
+                        record.merchant_id,
+                        current.id,
+                        {
+                            "claim_id": claim.claim_id,
+                            "incident_id": primary.candidate_incident_id,
+                            "decision": decision.decision.value,
+                            "remaining_minor": 0,
+                            "cap_unknown": True,
+                        },
+                    )
+                }
+            )
+            return CaseEvaluationResponse(
+                claim_id=claim.claim_id,
+                remedy_request_id=current.id,
+                incident_id=primary.candidate_incident_id,
+                remaining_minor=0,
+                decision=decision,
+                link=primary,
+            )
+
         settled_seed = historical_settled_minor(history)
         position = self.ledger.ensure_incident(
             record.merchant_id,

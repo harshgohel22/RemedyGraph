@@ -1,0 +1,172 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "holdout_pol_new_allow_1499",
+      "family": "new_incident",
+      "incident_id": "inc_h_new_1499",
+      "relation": "NEW_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 149900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 149900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 149900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 149900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 149900
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_exhausted_2999",
+      "family": "entitlement_exhausted",
+      "incident_id": "inc_h_exh_2999",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 299900,
+      "settled_entitlement_minor": 299900,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 299900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 299900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 299900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_uncertain_review",
+      "family": "ambiguous_link",
+      "incident_id": "inc_h_unc",
+      "relation": "UNCERTAIN",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 79900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 79900,
+      "remedy_type": "REPLACEMENT",
+      "amount_minor": 79900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 79900,
+        "remaining_after_minor": 79900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 79900
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_reserved_blocks",
+      "family": "concurrent_reservation",
+      "incident_id": "inc_h_rsv",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 199900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 199900,
+      "proposed_consumption_minor": 199900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 199900,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 0,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 199900,
+        "max_safe_amount_minor": 0
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_partial_ok",
+      "family": "partial_compensation",
+      "incident_id": "inc_h_part_ok",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 149900,
+      "settled_entitlement_minor": 50000,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 99900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 99900,
+      "expected": {
+        "decision": "ALLOW",
+        "remaining_before_minor": 99900,
+        "remaining_after_minor": 0,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 99900
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_partial_over",
+      "family": "partial_compensation",
+      "incident_id": "inc_h_part_over",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 149900,
+      "settled_entitlement_minor": 100000,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 80000,
+      "remedy_type": "STORE_CREDIT",
+      "amount_minor": 80000,
+      "expected": {
+        "decision": "PREVENT_DUPLICATE",
+        "remaining_before_minor": 49900,
+        "remaining_after_minor": 49900,
+        "avoidable_overcompensation_minor": 30100,
+        "max_safe_amount_minor": 49900
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_new_overask",
+      "family": "new_incident_overask",
+      "incident_id": "inc_h_over",
+      "relation": "NEW_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": [],
+      "allowed_entitlement_minor": 249900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 349900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 349900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 249900,
+        "remaining_after_minor": 249900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 249900
+      }
+    },
+    {
+      "scenario_id": "holdout_pol_contradiction_review",
+      "family": "ambiguous_link",
+      "incident_id": "inc_h_contra",
+      "relation": "SAME_INCIDENT",
+      "requires_review": false,
+      "contradictory_fields": ["order_reference"],
+      "allowed_entitlement_minor": 499900,
+      "settled_entitlement_minor": 0,
+      "reserved_entitlement_minor": 0,
+      "proposed_consumption_minor": 499900,
+      "remedy_type": "CASH_REFUND",
+      "amount_minor": 499900,
+      "expected": {
+        "decision": "REVIEW",
+        "remaining_before_minor": 499900,
+        "remaining_after_minor": 499900,
+        "avoidable_overcompensation_minor": 0,
+        "max_safe_amount_minor": 499900
+      }
+    }
+  ]
+}

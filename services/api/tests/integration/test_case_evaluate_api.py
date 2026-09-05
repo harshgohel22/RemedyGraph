@@ -84,6 +84,21 @@ def test_evaluate_does_not_double_seed_settled(
     assert ledger.json()["settled_entitlement_minor"] == 499900
 
 
+def test_new_claim_without_order_goes_to_review_not_invented_cap(
+    client: TestClient, world_earbuds: dict
+) -> None:
+    world = deepcopy(world_earbuds)
+    world["support_messages"] = []
+    world["historical_remedies"] = []
+    claim_id = _compile_email(client, world, order_reference=None, key="remedy_no_order_v1")
+    response = client.post(f"/v1/evaluate/claims/{claim_id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["link"]["relation"] == IncidentRelation.NEW_INCIDENT.value
+    assert body["decision"]["decision"] == Decision.REVIEW.value
+    assert ReasonCode.ENTITLEMENT_CAP_UNKNOWN.value in body["decision"]["reason_codes"]
+
+
 def test_new_claim_with_attested_order_is_allowed_without_history(
     client: TestClient, world_earbuds: dict
 ) -> None:

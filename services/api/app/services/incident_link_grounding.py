@@ -86,6 +86,8 @@ def ground_link(
         requires_review = True
     if relation is IncidentRelation.SAME_INCIDENT:
         requires_review = False
+    if relation is IncidentRelation.NEW_INCIDENT:
+        incident_id = incident_id_for_new_claim(claim.claim_id)
 
     return IncidentLinkAssessment(
         claim_id=claim.claim_id,

@@ -1,0 +1,356 @@
+{
+  "frozen_at": "2026-09-05",
+  "positive_class": "PREVENT_DUPLICATE",
+  "cases": [
+    {
+      "case_id": "holdout_email_after_whatsapp",
+      "family": "channel_switch_duplicate",
+      "notes": "Asha already received a WhatsApp replacement for the right bud, then emails for a cash refund of the same defect.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "The right side produces no audio. Please refund me.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_first_refund",
+      "family": "new_incident",
+      "notes": "First contact. No prior remedy. A cash refund within the unit price is allowed.",
+      "incoming": {
+        "body": "The right earbud has stopped working. Please refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_partial_remainder",
+      "family": "partial_compensation",
+      "notes": "A ₹2,000 goodwill refund already settled. The remaining ₹2,999 is still within cap.",
+      "priors": [
+        {
+          "body": "The right earbud has no audio. Please refund part of my payment.",
+          "channel": "SUPPORT_CHAT",
+          "order_reference": "ord_1001",
+          "remedy_type": "CASH_REFUND",
+          "status": "SETTLED",
+          "amount_minor": 200000,
+          "consumption_minor": 200000
+        }
+      ],
+      "incoming": {
+        "body": "The right earbud still has no audio. Refund the remaining amount.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 299900,
+        "consumption_minor": 299900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_second_partial_exceeds",
+      "family": "partial_compensation",
+      "notes": "₹3,000 already settled. Another ₹3,000 would exceed the ₹4,999 cap.",
+      "priors": [
+        {
+          "body": "The right earbud has no audio. Refund three thousand rupees.",
+          "channel": "EMAIL",
+          "order_reference": "ord_1001",
+          "remedy_type": "CASH_REFUND",
+          "status": "SETTLED",
+          "amount_minor": 300000,
+          "consumption_minor": 300000
+        }
+      ],
+      "incoming": {
+        "body": "The right earbud still has no audio. Refund another three thousand.",
+        "channel": "SUPPORT_CHAT",
+        "order_reference": "ord_1001",
+        "amount_minor": 300000,
+        "consumption_minor": 300000
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_credit_then_refund",
+      "family": "store_credit_then_refund",
+      "notes": "Full store credit already settled. A later cash refund of the same defect is a duplicate.",
+      "priors": [
+        {
+          "body": "The right earbud stopped working. Please give store credit.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "STORE_CREDIT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "The right earbud stopped working. I want a cash refund instead.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_named_order_duplicate",
+      "family": "channel_switch_duplicate",
+      "notes": "Same as the email-after-WhatsApp path, except the customer also names the order.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "The right side produces no audio. Please refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_other_order",
+      "family": "new_incident",
+      "notes": "A second attested order. Grounding must not attach this refund to the first order's replacement.",
+      "extra_orders": [
+        {
+          "order_id": "ord_2002",
+          "unit_price_minor": 499900
+        }
+      ],
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "The charger on my new order never arrived. Refund that order.",
+        "channel": "EMAIL",
+        "order_reference": "ord_2002",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_generic_tokens_false_same",
+      "family": "false_duplicate",
+      "notes": "Shared words like 'not working' plus a prior remedy are not enough to prove the same product failed.",
+      "priors": [
+        {
+          "body": "The earbuds are not working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "My charger is not working, refund me.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_paraphrase_miss",
+      "family": "paraphrase_leak",
+      "documented_miss": true,
+      "notes": "Same right-bud failure, rewritten with no overlapping content tokens and no order id. Honest miss: the heuristic treats it as new and would pay twice.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "Audio is gone on one side, send my money back.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_overask_first",
+      "family": "new_incident_overask",
+      "notes": "First claim asks for more than the unit price. Policy must review, not invent a higher cap.",
+      "incoming": {
+        "body": "The right earbud has stopped working. Please refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 599900,
+        "consumption_minor": 599900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "REVIEW"
+    },
+    {
+      "case_id": "holdout_damaged_after_functional",
+      "family": "false_duplicate",
+      "notes": "A new damaged-on-arrival claim on the same order is a different incident from the earlier audio failure.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "The box arrived cracked and the case is damaged. Refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_chat_then_email_overlap",
+      "family": "channel_switch_duplicate",
+      "notes": "Chat replacement already settled. Email restates the same dead right bud.",
+      "priors": [
+        {
+          "body": "Right bud dead. Please send a replacement.",
+          "channel": "SUPPORT_CHAT",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "Right earbud no sound. Refund me.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "SAME_INCIDENT",
+      "gold_decision": "PREVENT_DUPLICATE"
+    },
+    {
+      "case_id": "holdout_unrelated_prior_no_remedy",
+      "family": "new_incident",
+      "notes": "Prior billing question has no remedy. A later functional failure is a new incident.",
+      "priors": [
+        {
+          "body": "Where is the invoice for last month?",
+          "channel": "EMAIL"
+        }
+      ],
+      "incoming": {
+        "body": "The right earbud has stopped working. Please refund me.",
+        "channel": "WHATSAPP",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_missing_item_first",
+      "family": "new_incident",
+      "notes": "First contact for a missing item. Allow a refund within the unit price.",
+      "incoming": {
+        "body": "The package is incomplete. I did not receive the right earbud. Refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_wrong_item_after_replacement",
+      "family": "false_duplicate",
+      "notes": "Customer later received the wrong product. That is not the same incident as the earlier replacement.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "I received a different product, not what I ordered. Refund me.",
+        "channel": "EMAIL",
+        "order_reference": "ord_1001",
+        "amount_minor": 499900
+      },
+      "gold_relation": "NEW_INCIDENT",
+      "gold_decision": "ALLOW"
+    },
+    {
+      "case_id": "holdout_vague_followup",
+      "family": "ambiguous_link",
+      "notes": "A refund request with no defect description should go to review, not auto-pay.",
+      "priors": [
+        {
+          "body": "The right earbud has stopped working. Please send a replacement.",
+          "channel": "WHATSAPP",
+          "order_reference": "ord_1001",
+          "remedy_type": "REPLACEMENT",
+          "status": "SETTLED",
+          "amount_minor": 499900,
+          "consumption_minor": 499900
+        }
+      ],
+      "incoming": {
+        "body": "I need a refund for my order.",
+        "channel": "EMAIL",
+        "amount_minor": 499900
+      },
+      "gold_relation": "UNCERTAIN",
+      "gold_decision": "REVIEW"
+    }
+  ]
+}

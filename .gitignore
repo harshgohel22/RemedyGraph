@@ -1,4 +1,6 @@
 .venv/
+venv/
+env/
 .cursor/
 __pycache__/
 .pytest_cache/
@@ -6,7 +8,16 @@ __pycache__/
 .ruff_cache/
 *.pyc
 *.db
+*.sqlite
+*.sqlite3
 .env
+.env.*
+!.env.example
 .DS_Store
 dist/
 *.egg-info/
+.coverage
+htmlcov/
+coverage.xml
+*.log
+

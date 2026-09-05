@@ -56,6 +56,22 @@ def test_review_does_not_consume_remaining() -> None:
     assert result.remaining_after_minor == result.remaining_before_minor
 
 
+def test_new_incident_with_order_clash_can_still_allow() -> None:
+    position = EntitlementPosition(
+        incident_id="inc_new_order",
+        allowed_entitlement_minor=499900,
+        settled_entitlement_minor=0,
+        reserved_entitlement_minor=0,
+    )
+    result = decide(
+        position,
+        IncidentRelation.NEW_INCIDENT,
+        499900,
+        contradictory_fields=["order_reference"],
+    )
+    assert result.decision is Decision.ALLOW
+
+
 def test_contradiction_forces_review_even_if_same_incident() -> None:
 
     position = EntitlementPosition(

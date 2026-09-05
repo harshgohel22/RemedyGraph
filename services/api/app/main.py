@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.routes.audit import router as audit_router
 from app.api.routes.claims import router as claims_router
 from app.api.routes.evaluate import router as evaluate_router
 from app.api.routes.ingest import router as ingest_router
@@ -31,6 +32,7 @@ def create_app(*, init_db: bool = True) -> FastAPI:
     application.include_router(ledger_router)
     application.include_router(refunds_router)
     application.include_router(webhooks_router)
+    application.include_router(audit_router)
 
     @application.get("/health")
     def health() -> dict[str, str]:
